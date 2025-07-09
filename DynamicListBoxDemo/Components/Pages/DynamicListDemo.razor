@@ -1,0 +1,82 @@
+﻿@page "/dynamic-list"
+@rendermode InteractiveServer
+@using DynamicListBoxDemo.Models
+
+<h3>Dynamic List Box Demo</h3>
+
+<input class="form-control mb-2" @bind="NewItemText" placeholder="New Item..." />
+<button class="btn btn-primary me-2" @onclick="AddItem">Add</button>
+
+<div style="width:300px; height:200px; overflow-y:auto; border:1px solid gray; padding:5px">
+    @foreach (var item in ListItems)
+    {
+        <div class="d-flex justify-content-between align-items-center list-item">
+            <span @onclick="() => OnSelectedItemChanged(item)"
+                  style="cursor:pointer; flex-grow:1;">@item.Text</span>
+            <button class="btn btn-sm btn-danger ms-2" @onclick="() => RemoveItemInline(item.Id)">X</button>
+        </div>
+    }
+</div>
+
+@code {
+    private string NewItemText = string.Empty;
+    private List<ListBoxItem> ListItems = new();
+    private ListBoxItem? SelectedItem;
+
+    protected override void OnInitialized()
+    {
+        ListItems = new()
+        {
+            new ListBoxItem { Id = 1, Text = "Item 1" },
+            new ListBoxItem { Id = 2, Text = "Item 2" }
+        };
+    }
+
+    private Task OnSelectedItemChanged(ListBoxItem item)
+    {
+        SelectedItem = item;
+        Console.WriteLine($"Selected: {item.Text}");
+        return Task.CompletedTask;
+    }
+
+    private Task AddItem()
+    {
+        if (!string.IsNullOrWhiteSpace(NewItemText))
+        {
+            var newItem = new ListBoxItem
+            {
+                Id = ListItems.Count > 0 ? ListItems.Max(i => i.Id) + 1 : 1,
+                Text = NewItemText
+            };
+            ListItems.Add(newItem);
+            NewItemText = string.Empty;
+        }
+        return Task.CompletedTask;
+    }
+
+    private Task RemoveItem()
+    {
+        if (SelectedItem != null)
+        {
+            var toRemove = ListItems.FirstOrDefault(i => i.Id == SelectedItem.Id);
+            if (toRemove is not null)
+            {
+                ListItems.Remove(toRemove);
+                SelectedItem = null;
+            }
+        }
+        return Task.CompletedTask;
+    }
+
+    private Task RemoveItemInline(int id)
+    {
+        var item = ListItems.FirstOrDefault(i => i.Id == id);
+        if (item is not null)
+        {
+            ListItems.Remove(item);
+            if (SelectedItem?.Id == id)
+                SelectedItem = null;
+        }
+        return Task.CompletedTask;
+    }
+}

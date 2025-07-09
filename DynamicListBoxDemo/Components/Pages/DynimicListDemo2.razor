@@ -1,0 +1,47 @@
+﻿
+@page "/dynamic-list2"
+@using DynamicListBoxDemo.Models
+
+
+<h3>Dynamic List Box Demo</h3>
+
+<input @bind="NewItemText" placeholder="New Item..." class="form-control mb-2" />
+<button class="btn btn-success me-2" @onclick="AddItem">Add</button>
+<button class="btn btn-danger" @onclick="RemoveItem">Remove Selected</button>
+
+<DynamicListBox Items="@ListItems"
+                Width="300px"
+                Height="200px"
+                SelectedItemChanged="OnSelectedItemChanged" />
+
+@code {
+    private string NewItemText = string.Empty;
+    private List<ListBoxItem> ListItems = new();
+    private ListBoxItem? SelectedItem;
+
+    private async Task AddItem()
+    {
+        Console.WriteLine("AddItem clicked");
+        if (!string.IsNullOrWhiteSpace(NewItemText))
+        {
+            var item = new ListBoxItem { Id = ListItems.Count + 1, Text = NewItemText };
+            ListItems.Add(item);
+            NewItemText = string.Empty;
+        }
+    }
+
+    private async Task RemoveItem()
+    {
+        if (SelectedItem is not null)
+        {
+            ListItems.Remove(SelectedItem);
+            SelectedItem = null;
+        }
+    }
+
+    private Task OnSelectedItemChanged(ListBoxItem item)
+    {
+        SelectedItem = item;
+        return Task.CompletedTask;
+    }
+}

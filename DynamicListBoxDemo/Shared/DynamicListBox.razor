@@ -1,0 +1,51 @@
+﻿@using DynamicListBoxDemo.Models
+
+
+
+
+<div style="@($"width:{Width}; height:{Height}; overflow-y:auto; border:1px solid gray; padding:5px")">
+    @if (Items != null)
+    {
+        @foreach (var item in Items)
+        {
+            bool isSelected = SelectedItem?.Id == item.Id;
+
+            <div class="list-item @(isSelected ? "selected" : "")"
+                 @onclick="@(() => HandleItemClick(item))">
+                @item.Text
+            </div>
+        }
+    }
+    else
+    {
+        <p>No items to display.</p>
+    }
+</div>
+
+@code {
+    [Parameter] public List<ListBoxItem>? Items { get; set; }
+
+    [Parameter] public ListBoxItem? SelectedItem { get; set; }
+
+    [Parameter] public EventCallback<ListBoxItem> SelectedItemChanged { get; set; }
+
+    [Parameter] public string Width { get; set; } = "200px";
+
+    [Parameter] public string Height { get; set; } = "300px";
+
+    private async Task HandleItemClick(ListBoxItem item)
+    {
+        Console.WriteLine($"[Child] Clicked: {item.Text}");
+
+        if (SelectedItemChanged.HasDelegate)
+        {
+            Console.WriteLine("[Child] Invoking SelectedItemChanged...");
+            await SelectedItemChanged.InvokeAsync(item);
+        }
+        else
+        {
+            Console.WriteLine("[Child] No delegate attached to SelectedItemChanged!");
+        }
+    }
+}
+
