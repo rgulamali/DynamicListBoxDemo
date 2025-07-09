@@ -1,6 +1,9 @@
 ﻿@page "/dynamic-list"
 @rendermode InteractiveServer
+@using DynamicListBoxDemo.Data
 @using DynamicListBoxDemo.Models
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext
 
 <h3>Dynamic List Box Demo</h3>
 
@@ -23,13 +26,9 @@
     private List<ListBoxItem> ListItems = new();
     private ListBoxItem? SelectedItem;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        ListItems = new()
-        {
-            new ListBoxItem { Id = 1, Text = "Item 1" },
-            new ListBoxItem { Id = 2, Text = "Item 2" }
-        };
+        ListItems = await DbContext.ListBoxItems.ToListAsync();
     }
 
     private Task OnSelectedItemChanged(ListBoxItem item)
@@ -39,44 +38,43 @@
         return Task.CompletedTask;
     }
 
-    private Task AddItem()
+    private async Task AddItem()
     {
         if (!string.IsNullOrWhiteSpace(NewItemText))
         {
-            var newItem = new ListBoxItem
-            {
-                Id = ListItems.Count > 0 ? ListItems.Max(i => i.Id) + 1 : 1,
-                Text = NewItemText
-            };
+            var newItem = new ListBoxItem { Text = NewItemText };
+            DbContext.ListBoxItems.Add(newItem);
+            await DbContext.SaveChangesAsync();
             ListItems.Add(newItem);
             NewItemText = string.Empty;
         }
-        return Task.CompletedTask;
     }
 
-    private Task RemoveItem()
+    private async Task RemoveItem()
     {
         if (SelectedItem != null)
         {
-            var toRemove = ListItems.FirstOrDefault(i => i.Id == SelectedItem.Id);
+            var toRemove = await DbContext.ListBoxItems.FindAsync(SelectedItem.Id);
             if (toRemove is not null)
             {
+                DbContext.ListBoxItems.Remove(toRemove);
+                await DbContext.SaveChangesAsync();
                 ListItems.Remove(toRemove);
                 SelectedItem = null;
             }
         }
-        return Task.CompletedTask;
     }
 
-    private Task RemoveItemInline(int id)
+    private async Task RemoveItemInline(int id)
     {
-        var item = ListItems.FirstOrDefault(i => i.Id == id);
+        var item = await DbContext.ListBoxItems.FindAsync(id);
         if (item is not null)
         {
-            ListItems.Remove(item);
+            DbContext.ListBoxItems.Remove(item);
+            await DbContext.SaveChangesAsync();
+            ListItems.RemoveAll(i => i.Id == id);
             if (SelectedItem?.Id == id)
                 SelectedItem = null;
         }
-        return Task.CompletedTask;
     }
 }
